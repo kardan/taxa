@@ -87,9 +87,6 @@ for use:
   ([thing tag] {::tag tag
                 ::thing thing}))
 
-(string? )
-
-
 (defn taxon?
   "Returns true if t is a taxon"
   [t]
