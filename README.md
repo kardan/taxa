@@ -7,7 +7,6 @@ An experiment in hierarchical domain logic
 ```
 
 ## License
-
 Copyright © 2019- Daniel Sunnerek
 
 Distributed under the Eclipse Public License version 2.0
