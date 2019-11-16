@@ -8,6 +8,6 @@ An experiment in hierarchical domain logic
 ```
 
 ## License
-Copyright © 2019- Daniel Sunnerek
+Copyright © 2019 - present Daniel Sunnerek
 
 Distributed under the Eclipse Public License version 2.0
