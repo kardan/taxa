@@ -16,4 +16,4 @@ jobs:
       with:
         tools-deps: '1.10.1.483'
     - name: Unit test
-      run: ./bin/kaocha unit
+      run: clojure -A:test -m kaocha.runner unit
