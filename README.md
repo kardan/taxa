@@ -1,6 +1,8 @@
 # Taxa
 An experiment in hierarchical domain logic
 
+![](https://github.com/kardan/taxa/workflows/CI/badge.svg)
+
 ## Run unit tests
 ```
 ./bin/kaocha unit
