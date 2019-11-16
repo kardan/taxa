@@ -87,7 +87,12 @@ for use:
   ([thing tag] {::tag tag
                 ::thing thing}))
 
-(defn taxon? [t]
+(string? )
+
+
+(defn taxon?
+  "Returns true if t is a taxon"
+  [t]
   (and (map? t)
        (every? #(contains? t %) '(::tag ::thing))))
 
@@ -101,13 +106,16 @@ for use:
 ;;;
 
 (def taxa
+  "Default hierarchy"
   (atom (make-hierarchy)))
 
 (def effecting-fns
+  "Fns effecting a hierarchy"
   (atom #{clojure.core/derive
           clojure.core/underive}))
 
 (def non-effecting-fns
+  "Fns without effect on hierarchy"
   (atom #{clojure.core/ancestors
           clojure.core/descendants
           clojure.core/isa?
