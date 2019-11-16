@@ -1,0 +1,4 @@
+{:aliases {:dev {:extra-paths ["src/dev"]}
+           :test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-554"}}}}
+ :deps {org.clojure/clojure {:mvn/version "1.10.0"}}
+ :paths ["src/main"]}
