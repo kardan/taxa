@@ -1,0 +1,277 @@
+(ns ^{:author "Daniel Sunnerek"
+      :doc "Taxa, an experiment in hierarchical domain logic
+"}
+    com.kardans.taxa)
+
+(set! *warn-on-reflection* true)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Tag
+;;;
+
+(defmulti tag
+  "Returns tag from either tag, taxon or variant."
+  {:arglists '([from])}
+  type)
+
+(defmethod tag clojure.lang.PersistentArrayMap
+  [{::keys [tag]}] tag)
+
+(defmethod tag clojure.lang.Keyword
+  [tag] tag)
+
+(defmethod tag clojure.lang.PersistentVector
+  [[tag _]] tag)
+
+(defmethod tag :default
+  [_] nil)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Thing
+;;;9
+
+(defmulti thing
+  "Returns thing from taxon or variant."
+  {:arglists '([from])}
+  type)
+
+(defmethod thing clojure.lang.PersistentArrayMap
+  [{::keys [thing]}] thing)
+
+(defmethod thing clojure.lang.PersistentVector
+  [[_ thing]] thing)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Taxon
+;;;
+
+(defn taxon
+  "Creates a taxon from a thing, tag defaults to :com.kardans.taxa/ok"
+  ([thing] (taxon thing ::ok))
+  ([thing tag] {::tag tag
+                ::thing thing}))
+
+(defn taxon?
+  "Returns true if t is a taxon"
+  [t]
+  (and (map? t)
+       (every? #(contains? t %) '(::tag ::thing))))
+
+(defn taxon->variant
+  "Returns an old school vector variant [tag thing]."
+  [{::keys [tag thing]}]
+  [tag thing])
+
+(defn taxonable?
+  "True for taxon or keyword"
+  [t]
+  (or (taxon? t)
+      (keyword t)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Hierarchy
+;;;
+
+(def taxa
+  "Default hierarchy"
+  (atom (make-hierarchy)))
+
+(def effecting-fns
+  "Fns effecting a hierarchy"
+  (atom #{clojure.core/derive
+          clojure.core/underive}))
+
+(def non-effecting-fns
+  "Fns without effect on hierarchy"
+  (atom #{clojure.core/ancestors
+          clojure.core/descendants
+          clojure.core/isa?
+          clojure.core/parents}))
+
+#_(defn in-taxa
+    "If hierarchy is provided it has to be wrapped in an atom."
+    [f & [hierarchy? & tag-pair :as non-hierarchy-args]]
+    #_(prn "@in-taxa")
+    #_(clojure.pprint/pprint non-hierarchy-args)
+    (let [[hierarchy & args] (if (= (type hierarchy?) clojure.lang.Atom)
+                               (do
+                                 #_(prn "@a")
+                                 (conj (map tag tag-pair) hierarchy?))
+                               (do
+                                 #_(prn "@b")
+                                 (conj (map tag non-hierarchy-args) taxa)))]
+      #_(clojure.pprint/pprint hierarchy)
+      #_(clojure.pprint/pprint args)
+      (condp contains? f
+        @effecting-fns (apply (partial swap! hierarchy f) args)
+        @non-effecting-fns (->>
+                            (conj args @hierarchy)
+                            (apply f))
+        (throw (UnsupportedOperationException. "Provided fn not supported.")))))
+
+#_(defn in-taxa-2
+    "If hierarchy is provided it has to be wrapped in an atom."
+    ([f member]
+     ::not-sure-about-this)
+    ([f member {:keys [hierarchy parent] :as opts}]
+     (condp contains? f
+       ;; @effecting-fns (apply (partial swap! hierarchy f) args)
+       ;; @effecting-fns (let [h (-> hierarchy deref deref)
+       ;;                      (apply (partial swap! h f) )])
+       @effecting-fns (do
+                        (clojure.pprint/pprint f)
+                        (clojure.pprint/pprint member)
+                        (clojure.pprint/pprint opts)
+                        )
+
+       @non-effecting-fns (let [h (-> hierarchy deref deref)]
+                            (apply f (list h member parent)))
+       (throw (UnsupportedOperationException. "Provided fn not supported.")))))
+
+#_(defn in-taxa-3
+    "If hierarchy is provided it has to be wrapped in an atom."
+    ([f member]
+     ::not-sure-about-this)
+    ([f member {:keys [hierarchy parent] :as opts}]
+     (condp contains? f
+       ;; @effecting-fns (apply (partial swap! hierarchy f) args)
+       ;; @effecting-fns (let [h (-> hierarchy deref deref)
+       ;;                      (apply (partial swap! h f) )])
+       @effecting-fns (do
+                        (clojure.pprint/pprint f)
+                        (clojure.pprint/pprint member)
+                        (clojure.pprint/pprint opts)
+                        )
+
+       @non-effecting-fns (let [h (-> hierarchy deref deref)]
+                            (apply f (list h member parent)))
+       (throw (UnsupportedOperationException. "Provided fn not supported."))))
+    ([f tag parent {:keys [hierarchy parent] :as opts}]
+     (prn "hj")
+     )
+    )
+
+
+#_(comment
+
+    (defn in-taxa-4
+      [f & args])
+
+    (in-taxa-4 isa? ::ok ::root)
+    (in-taxa-4 isa? {:hierarchy :h :parent ::root} ::ok)
+
+    (in-taxa-4 ancestors ::root)
+    (in-taxa-4 ancestors {:hierarchy :h :parent ::root})
+
+    (in-taxa-4 derive ::ok ::root)
+    (in-taxa-4 derive {:hierarchy :h :parent ::root} ::ok)
+
+    )
+
+;; Derive defaults
+#_(in-taxa-3 derive ::ok ::root)
+#_(in-taxa-2 derive ::err ::root {:parent :p})
+
+
+#_(defmacro in-taxa-5
+    [f & args]
+    (let [maybe-hierarchy (first args)
+          args-map (if (symbol? maybe-hierarchy)
+                     {:h (resolve maybe-hierarchy)
+                      :args  (next args)}
+                     {:args args})]
+      (if-let [h (:h args-map)]
+        `(let [h# (-> ~h deref)
+               f# (partial swap! h# ~f)
+               args# (:args '~args-map)]
+           (apply f# args#))
+        `(apply f# '~(:args args-map)))))
+
+#_(defmacro in-taxa-5
+    [f & args]
+    (let [maybe-hierarchy (first args)
+          {:keys [args h] :as args-map} (if (symbol? maybe-hierarchy)
+                                          {:h (resolve maybe-hierarchy)
+                                           :args  (next args)}
+                                          {:args args})]
+      `(let [hierarchy# (if ~h (deref ~h) (deref (resolve ~taxa)))
+             f# (partial swap! hierarchy# ~f)]
+         (apply f# '~args))))
+
+
+#_(comment
+
+    (in-taxa-5 derive taxa ::okies ::ok)
+    (in-taxa-5 derive ::okidoki ::ok)
+
+    )
+
+
+#_(comment
+
+    (in-taxa-5 derive taxa ::okies ::ok)
+    (in-taxa-5 derive ::okidoki ::ok)
+    )
+
+;; (defn atom? [x]
+;;   #?(:clj (instance? clojure.lang.IAtom x)
+;;      :cljs (satisfies? IAtom x)))
+
+(defn atom? [x]
+  (instance? clojure.lang.IAtom x))
+
+(defn in-taxa
+  [f & args]
+  (let [?h (first args)
+        [h f-args] (if (atom? ?h) [?h (next args)] [taxa args])]
+    (condp contains? f
+      @effecting-fns (apply (partial swap! h f) f-args)
+      @non-effecting-fns (apply f (cons @h f-args))
+      (throw (UnsupportedOperationException. "Provided fn not supported.")))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Derive taxa
+
+(in-taxa derive ::ok ::root)
+(in-taxa derive ::err ::root)
+
+
+(comment
+
+  (in-taxa derive taxa ::okaj ::ok)
+  (in-taxa derive ::okidoki ::ok)
+  (in-taxa descendants ::root)
+
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Predicates
+
+(defn taxed?
+  "Returns true if member has an isa relationship in hierarchy default parent
+  :com.kardans.taxa/root"
+  ([member]
+   (taxed? taxa member ::root))
+  ([member parent]
+   (taxed? taxa member parent))
+  ([hierarchy member parent]
+   (assert (atom? hierarchy) "hierarchy should be a hierarchy in an atom")
+   #_(assert (taxonable? member) "member should be taxon or tag")
+   #_(assert (keyword? parent) "parent should be tag")
+   (in-taxa isa? hierarchy (tag member) parent)))
+
+
+(defn ok?
+  "Returns true if member has an isa relationship with com.kardans.taxa/ok in
+  default hierarchy"
+  [member]
+  (taxed? member ::ok))
+
+(defn err?
+  "Returns true if member has an isa relationship with com.kardans.taxa/err in
+  default hierarchy"
+  [member]
+  (taxed? member ::err))

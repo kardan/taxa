@@ -2,14 +2,19 @@
   (:require
    [kaocha.repl :as kaocha]))
 
-(defn unit-test
-  "Run unit tests"
-  []
-  (kaocha.repl/run :unit))
+
+(defn run-test
+  "Run test suit"
+  ([]
+   (run-test :clj))
+  ([suit]
+   (kaocha.repl/run suit)))
 
 
 (comment
 
-  (unit-test)
+  (run-test :clj)
+
+  (run-test :cljs)
 
   )

@@ -15,5 +15,5 @@ jobs:
     - uses: DeLaGuardo/setup-clojure@1.0
       with:
         tools-deps: '1.10.1.483'
-    - name: Unit test
-      run: clojure -A:test -m kaocha.runner unit
+    - name: Clojure test suit
+      run: ./bin/kaocha clj-tests

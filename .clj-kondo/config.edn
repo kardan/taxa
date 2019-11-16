@@ -1,0 +1,1 @@
+{:lint-as {com.kardans.taxa.alfa.util/taxed-let clojure.core/let}}

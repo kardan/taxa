@@ -1,6 +1,7 @@
 (ns com.kardans.taxa-test
   (:require
-   [clojure.test :refer [deftest is testing]]
+   #?(:clj [clojure.test :refer [deftest is testing]]
+      :cljs [cljs.test :refer-macros [deftest is testing run-tests]])
    [com.kardans.taxa :as taxa]))
 
 
@@ -60,6 +61,14 @@
              (taxa/taxon thing ::taxa/err))))))
 
 
+(deftest taxon?
+  (testing "Is taxon"
+    (is (taxa/taxon? (taxa/taxon {:k :v})))
+    (is (not (taxa/taxon? {:k :v})))
+    (is (not (taxa/taxon? nil)))
+    (is (not (taxa/taxon? {::tag :tag})))))
+
+
 (deftest taxon->variant
   (testing "thing->taxon->variant->[tag thing] round trip"
     (let [thing {:k :v}
@@ -68,12 +77,28 @@
       (is (= new-thing thing)))))
 
 
-(deftest taxon?
-  (testing "Is taxon"
-    (is (taxa/taxon? (taxa/taxon {:k :v})))
-    (is (not (taxa/taxon? {:k :v})))
-    (is (not (taxa/taxon? nil)))
-    (is (not (taxa/taxon? {::tag :tag})))))
+(deftest atom?-test
+  (testing "Testing positive atom? predicate"
+    (is (taxa/atom? (atom {}))))
+
+  (testing "Testing negative atom? predicate"
+    (is (not (taxa/atom? @(atom {}))))
+    (is (not (taxa/atom? nil)))
+    (is (not (taxa/atom? ())))))
+
+
+(deftest in-taxa-test
+
+  (testing "Non effecting in default hierarchy (also tests default state)"
+    (is (nil? (taxa/in-taxa ancestors ::taxa/root)))
+    (is (= #{::taxa/ok ::taxa/err} (taxa/in-taxa descendants ::taxa/root))))
+
+  (testing "Effecting in default hierarchy"
+    (try
+      (taxa/in-taxa derive ::okay ::taxa/ok)
+      (is (taxa/in-taxa isa? ::okay ::taxa/ok))
+      (is (= #{::taxa/ok ::taxa/err ::okay} (taxa/in-taxa descendants ::taxa/root)))
+      (finally (taxa/in-taxa underive ::okay ::taxa/ok)))))
 
 
 (deftest taxed?
@@ -91,20 +116,16 @@
     (is (not (taxa/taxed? (taxa/taxon {:k :v} ::taxa/maybe))))
     (is (not (taxa/taxed? (taxa/taxon {:k :v} :ok)))))
 
+  (testing "arguments"
+    (is (taxa/taxed? ::taxa/ok ::taxa/ok))
+    (is (not (taxa/taxed? ::taxa/err ::taxa/ok)))
+    (is (taxa/taxed? (taxa/taxon {:k :v} ::taxa/ok) ::taxa/ok))
+    (is (not (taxa/taxed? (taxa/taxon {:k :v} ::what) ::taxa/ok))))
+
   (testing "oddities"
     (is (not (taxa/taxed? nil)))
     (is (not (taxa/taxed? ())))
     (is (not (taxa/taxed? false)))))
-
-
-(deftest non-and-effecting-fns
-  (testing "Effecting-fns wrapped in atom"
-    (is (= (type taxa/effecting-fns)
-           clojure.lang.Atom)))
-
-  (testing "Non-effecting-fns wrapped in atom"
-    (is (= (type taxa/non-effecting-fns)
-           clojure.lang.Atom))))
 
 
 (deftest custom-hierarchy
@@ -127,90 +148,30 @@
         (is (contains? (-> updated-hierarchy :descendants ::vehicle)
                        ::car))))
 
+    (testing "related?"
+      (is (taxa/taxed? ::taxa/ok))
+      (is (taxa/taxed? (taxa/taxon {:k :v})))
+      (is (taxa/taxed? test-hierarchy ::car ::vehicle))
+      (is (taxa/taxed? test-hierarchy
+                       (taxa/taxon {:brand "saab"} ::car)
+                       ::vehicle))
+      (is (not (taxa/taxed? test-hierarchy
+                            (taxa/taxon {:brand "saab"} ::mouse)
+                            ::vehicle))))
     (testing "Taxed? in updated updated-hierarchy"
-      (is (taxa/taxed? ::car test-hierarchy ::vehicle)))))
+      (is (taxa/taxed? test-hierarchy ::car ::vehicle))
+      (is (taxa/taxed? test-hierarchy (taxa/taxon {:k :v} ::car) ::vehicle))
+      (is (not (taxa/taxed? test-hierarchy
+                            (taxa/taxon {:k :v} ::cat)
+                            ::vehicle)))
+      (is (taxa/taxed? test-hierarchy ::car ::vehicle)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Test fns
-;;;
-
-(defn f1
-  [thing]
-  (taxa/taxon (assoc thing :f1 "f1")))
-
-(defn f2
-  ([thing]
-   (f2 thing "f2"))
-  ([thing arg]
-   (taxa/taxon (assoc thing :f2 arg))))
-
-(defn f3
-  [thing]
-  (taxa/taxon (assoc thing :f3 "f3") ::taxa/err))
+    (testing "Applying not added function"
+      (is (thrown? #?(:clj clojure.lang.ExceptionInfo
+                      :cljs ExceptionInfo)
+                   (taxa/in-taxa assoc test-hierarchy ::mouse ::vehicle))))))
 
 
-
-(deftest when-rel
-
-  (testing "Default tag case"
-    (let [{:keys [::taxa/thing]} (taxa/when-rel [t (f1 {:k :v})]
-                                                (f2 (taxa/thing t)))]
-      (is (= thing {:k :v, :f1 "f1", :f2 "f2"}))))
-
-  (testing "Custom tag case"
-    (let [{:keys [::taxa/thing]} (taxa/when-rel [t (f3 {:k :v})]
-                                                (f1 (taxa/thing t))
-                                                ::taxa/err)]
-      (is (= thing {:k :v :f1 "f1" :f3 "f3"}))))
-
-  (testing "Failing tag custom tag case"
-    (let [{:keys [::taxa/thing]} (taxa/when-rel [t (f3 {:k :v})]
-                                                (f1 (taxa/thing t)))]
-      (is (= thing {:k :v :f3 "f3"})))))
-
-
-;; success tag in current namespace derived from ::taxa/ok
-
-(defn f4
-  [thing]
-  (let [{:keys [token]} (meta thing)]
-    (taxa/taxon (assoc thing :f4 token) ::success)))
-
-(taxa/in-taxa derive ::success ::taxa/ok)
-
-(deftest rel->
-  (testing "Simple"
-    (is (= (taxa/rel-> {:k :v}
-                       f1
-                       f2)
-           (taxa/taxon {:k :v
-                        :f1 "f1"
-                        :f2 "f2"}))))
-
-  (testing "Short circut"
-    (let [{:keys [::taxa/thing ::taxa/err-ctx] :as t} (taxa/rel-> {:k :v}
-                                                                  f1
-                                                                  f3
-                                                                  f2)]
-
-      (clojure.pprint/pprint t)
-      (is (= (taxa/tag t) ::taxa/err))
-      (is (= thing {:k :v :f1 "f1" :f3 "f3"}))
-      (is (= (-> err-ctx ::taxa/err-thing)
-             {:k :v :f1 "f1"}))
-      (is (= (-> err-ctx ::taxa/err-fn) f3))))
-
-
-  (testing "Local tag using meta data"
-
-    (let [m (with-meta {:k :v} {:token "abc123"})
-          t (taxa/rel-> m
-                        f1
-                        f4
-                        f2)]
-      (is (= (taxa/tag t) ::taxa/ok))
-      (is (= (taxa/thing t)
-             (assoc m
-                    :f1 "f1"
-                    :f2 "f2"
-                    :f4 "abc123"))))))
+(comment
+  #?(:cljs (run-tests))
+  )
