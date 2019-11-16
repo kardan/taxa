@@ -1,7 +1,7 @@
 # Taxa
 An experiment in hierarchical domain logic
 
-![](https://github.com/kardan/taxa/workflows/CI/badge.svg)
+[![CI](https://github.com/kardan/taxa/workflows/CI/badge.svg)](https://github.com/kardan/taxa/actions)
 
 ## Run unit tests
 ```
