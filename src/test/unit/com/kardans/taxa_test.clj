@@ -97,6 +97,17 @@
     (is (not (taxa/taxed? false)))))
 
 
+(deftest taxed?
+  (is (taxa/taxed? ::taxa/root))
+  (is (taxa/taxed? ::taxa/ok))
+  (is (taxa/taxed? ::taxa/err))
+  (is (taxa/taxed? ::taxa/ok {:parent ::taxa/ok}))
+  (is (not (taxa/taxed? ::taxa/err {:parent ::taxa/ok})))
+  (is (taxa/taxed? (taxa/taxon {:k :v} ::taxa/ok) {:parent ::taxa/ok}))
+  (is (not (taxa/taxed? (taxa/taxon {:k :v} ::what) {:parent ::taxa/ok})))
+  (is (not  (taxa/taxed? ::ok))))
+
+
 (deftest non-and-effecting-fns
   (testing "Effecting-fns wrapped in atom"
     (is (= (type taxa/effecting-fns)
@@ -127,90 +138,28 @@
         (is (contains? (-> updated-hierarchy :descendants ::vehicle)
                        ::car))))
 
+    (testing "related?"
+      (is (taxa/taxed? ::taxa/ok))
+      (is (taxa/taxed? (taxa/taxon {:k :v})))
+      (is (taxa/taxed? ::car {:hierarchy test-hierarchy
+                              :parent ::vehicle}))
+      (is (taxa/taxed? (taxa/taxon {:brand "saab"} ::car)
+                       {:hierarchy test-hierarchy
+                        :parent ::vehicle}))
+      (is (not (taxa/taxed? (taxa/taxon {:brand "saab"} ::mouse)
+                            {:hierarchy test-hierarchy
+                             :parent ::vehicle}))))
+
     (testing "Taxed? in updated updated-hierarchy"
-      (is (taxa/taxed? ::car test-hierarchy ::vehicle)))))
+      (is (taxa/taxed? ::car {:hierarchy test-hierarchy
+                              :parent ::vehicle}))
+      (is (taxa/taxed? (taxa/taxon {:k :v} ::car) {:hierarchy test-hierarchy
+                                                   :parent ::vehicle}))
+      (is (not (taxa/taxed? (taxa/taxon {:k :v} ::cat) {:hierarchy test-hierarchy
+                                                        :parent ::vehicle})))
+      (is (taxa/taxed? ::car {:hierarchy test-hierarchy
+                              :parent (taxa/taxon {:k :v} ::vehicle)})))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Test fns
-;;;
-
-(defn f1
-  [thing]
-  (taxa/taxon (assoc thing :f1 "f1")))
-
-(defn f2
-  ([thing]
-   (f2 thing "f2"))
-  ([thing arg]
-   (taxa/taxon (assoc thing :f2 arg))))
-
-(defn f3
-  [thing]
-  (taxa/taxon (assoc thing :f3 "f3") ::taxa/err))
-
-
-
-(deftest when-rel
-
-  (testing "Default tag case"
-    (let [{:keys [::taxa/thing]} (taxa/when-rel [t (f1 {:k :v})]
-                                                (f2 (taxa/thing t)))]
-      (is (= thing {:k :v, :f1 "f1", :f2 "f2"}))))
-
-  (testing "Custom tag case"
-    (let [{:keys [::taxa/thing]} (taxa/when-rel [t (f3 {:k :v})]
-                                                (f1 (taxa/thing t))
-                                                ::taxa/err)]
-      (is (= thing {:k :v :f1 "f1" :f3 "f3"}))))
-
-  (testing "Failing tag custom tag case"
-    (let [{:keys [::taxa/thing]} (taxa/when-rel [t (f3 {:k :v})]
-                                                (f1 (taxa/thing t)))]
-      (is (= thing {:k :v :f3 "f3"})))))
-
-
-;; success tag in current namespace derived from ::taxa/ok
-
-(defn f4
-  [thing]
-  (let [{:keys [token]} (meta thing)]
-    (taxa/taxon (assoc thing :f4 token) ::success)))
-
-(taxa/in-taxa derive ::success ::taxa/ok)
-
-(deftest rel->
-  (testing "Simple"
-    (is (= (taxa/rel-> {:k :v}
-                       f1
-                       f2)
-           (taxa/taxon {:k :v
-                        :f1 "f1"
-                        :f2 "f2"}))))
-
-  (testing "Short circut"
-    (let [{:keys [::taxa/thing ::taxa/err-ctx] :as t} (taxa/rel-> {:k :v}
-                                                                  f1
-                                                                  f3
-                                                                  f2)]
-
-      (clojure.pprint/pprint t)
-      (is (= (taxa/tag t) ::taxa/err))
-      (is (= thing {:k :v :f1 "f1" :f3 "f3"}))
-      (is (= (-> err-ctx ::taxa/err-thing)
-             {:k :v :f1 "f1"}))
-      (is (= (-> err-ctx ::taxa/err-fn) f3))))
-
-
-  (testing "Local tag using meta data"
-
-    (let [m (with-meta {:k :v} {:token "abc123"})
-          t (taxa/rel-> m
-                        f1
-                        f4
-                        f2)]
-      (is (= (taxa/tag t) ::taxa/ok))
-      (is (= (taxa/thing t)
-             (assoc m
-                    :f1 "f1"
-                    :f2 "f2"
-                    :f4 "abc123"))))))
+    (testing "Applying not added function"
+      (is (thrown? UnsupportedOperationException
+                   (taxa/in-taxa assoc test-hierarchy ::mouse ::vehicle))))))

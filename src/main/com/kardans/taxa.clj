@@ -1,38 +1,5 @@
 (ns ^{:author "Daniel Sunnerek"
       :doc "Taxa, an experiment in hierarchical domain logic
-
-## Taxon
-Just a spin on variants - think of it as a data wrapping that is the foundation
-to utility fns. In short a taxon is a map of keys :com.kardans.taxa/tag and
-:com.kardans.taxa/thing.
-
-``` clojure
-#:com.kardans.taxa{:tag :com.kardans.taxa/root,
-                   :thing {:k :v}}
-```
-
-## What hierarchy
-
-Taxa is a system of taxons put into a hierarchy based on taxons tag. Essentially
-a taxon is a tag and a thing and the tag is put into the hierarchy. Taxa
-provides a starting ground of tree tags (root, err & ok). You are encuraged to
-build from these.
-
-  ::root
-   /  \\
-::err ::ok
-
-## Utility fn
-Beside the taxon and the hierarchy, Taxa also provides the following utility fns
-for use:
-
-``` clojure
-(in-taxa)  ;; Operate on hierarchy
-(rel?)     ;; Boolean check for relationship
-(when-rel) ;; Like if-let but testing with rel?
-(rel->)    ;; Threading, but will short circut if not rel?
-```
-
 "}
     com.kardans.taxa)
 
@@ -129,80 +96,32 @@ for use:
       @non-effecting-fns (->>
                           (conj args @hierarchy)
                           (apply f))
-      (throw (Exception. "Provided fn not supported.")))))
+      (throw (UnsupportedOperationException. "Provided fn not supported.")))))
 
 ;; Derive defaults
 (in-taxa derive ::ok ::root)
 (in-taxa derive ::err ::root)
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Predicates
+;;;
+
 (defn taxed?
-  "Is member in hierarchy? Member can be tag, taxon or variant."
+  "Returns true if member has an isa relationship in hierarchy"
   ([member]
-   (in-taxa isa? member ::root))
-  ([member hierarchy parent]
+   (taxed? member {}))
+  ([member {:keys [hierarchy parent] :or {hierarchy taxa parent ::root} :as opts}]
    (in-taxa isa? hierarchy member parent)))
 
+(defn ok?
+  "Returns true if member has an isa relationship with com.kardans.taxa/ok in
+  default hierarchy"
+  [member]
+  (taxed? member {:parent ::ok}))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; rel?
-;;;
-
-(defn rel?
-  "Returns true if t is related (same or descended) to relative, default to
-  :com.kardans.taxa/ok."
-  ([t]
-   (rel? t ::ok))
-  ([t relative]
-   (isa? @taxa (tag t) (tag relative))))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; when-rel
-;;;
-
-(defmacro when-rel
-  "bindings => binding-form taxon
-
-  If taxon is kin of tag, evaluates then with binding-form bound to the
-  value of taxon, if not returns taxon. Tag defaults to :com.kardans.taxa/ok"
-  ([bindings then]
-   `(when-rel ~bindings ~then ::ok))
-  ([bindings then tag & oldform]
-   (assert (vector? bindings) "a vector for its binding")
-   (assert (taxed? tag) "Tag needs to be in hierarchy")
-   (assert (nil? oldform) "1 or 2 forms after binding vector")
-   (assert (= 2 (count bindings)) "exactly 2 forms in binding vector")
-   (let [form (bindings 0) tst (bindings 1)]
-     `(let [t# ~tst]
-        (if (rel? t# ~tag)
-          (let [~form t#]
-            ~then)
-          t#)))))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; rel->
-;;;
-
-(defmacro rel->
-  "Thread start through the forms while condition, default to ::ok."
-  [start & [head & tail :as forms]]
-  (let [[condition forms] (if (taxed? head)
-                            [head tail]
-                            [:com.kardans.taxa/ok forms])]
-    `(let [m# (meta ~start)
-           v# (reduce (fn [t# f#]
-                        (let [thing# (if (taxon? t#) (thing t#) t#)
-                              txn# (f# (with-meta thing# (merge m# (meta thing#))))]
-                          (if (rel? txn# ~condition)
-                            (thing txn#)
-                            (reduced (assoc txn#
-                                            :com.kardans.taxa/err-ctx
-                                            #:com.kardans.taxa{:err-fn f#
-                                                               :err-thing thing#})))))
-                      ~start
-                      ~(vec forms))]
-       (if (taxon? v#)
-         v#
-         (taxon v# ~condition)))))
+(defn err?
+  "Returns true if member has an isa relationship with com.kardans.taxa/err in
+  default hierarchy"
+  [member]
+  (taxed? member {:parent ::err}))
