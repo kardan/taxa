@@ -11,11 +11,11 @@
   (testing "Flow"
     (let [x (macro-api/when-taxed? [t (taxa/taxon {:k :v})]
                                    (assoc t :when true))]
-      (is (x :when))))
+      (is (:when x))))
   (testing "No flow"
     (let [x (macro-api/when-taxed? [t (taxa/taxon {:k :v} ::taxa/err)]
                                    (assoc t :when true))]
-      (is (nil? (x :when)))))
+      (is (nil? (:when x)))))
   (testing "No flow"
     (let [x (macro-api/when-taxed? [t (taxa/taxon {:k :v})]
                                    (assoc t :when true)
@@ -25,7 +25,7 @@
     (let [x (macro-api/when-taxed? [t (taxa/taxon {:k :v})]
                                    (assoc t :when true)
                                    ::taxa/err)]
-      (is (nil? (x :when)))))
+      (is (nil? (:when x)))))
   )
 
 

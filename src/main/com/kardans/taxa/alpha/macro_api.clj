@@ -10,7 +10,7 @@
   ([bindings then]
    `(when-taxed? ~bindings ~then :com.kardans.taxa/ok))
   ([bindings then tag]
-   `(when-taxed? ~bindings ~then ::taxa/ok taxa/taxa))
+   `(when-taxed? ~bindings ~then ~tag com.kardans.taxa/taxa))
   ([bindings then tag hierarchy]
    (assert (vector? bindings) "a vector for its binding")
    (assert (= 2 (count bindings)) "exactly 2 forms in binding vector")
@@ -18,7 +18,7 @@
          tst (bindings 1)]
      `(let [temp# ~tst]
         (if (taxa/taxed? temp# {:parent ~tag
-                                :hierarchy hierarchy})
+                                :hierarchy ~hierarchy})
           (let [~form temp#]
             ~then)
           temp#)))))
