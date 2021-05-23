@@ -1,10 +1,8 @@
-(ns com.kardans.rationale
+(ns com.kardansa.taxa.rationale
   (:require [com.kardans.taxa :as taxa]
-            [com.kardans.taxa.flow.clj :refer [while->]]))
+            #?(:clj [com.kardans.taxa.flow.clj :refer [taxed-let while->]]
+               :cljs [com.kardans.taxa.flow.cljs :refer-macros [taxed-let while->]])))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Data
-;;;
 
 (def db (atom {:person/id {1 {:person/id 1
                               :person/name "Daniel"
@@ -46,10 +44,6 @@
                               :family/members []}}}))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Fans
-;;;
-
 (defn validate-input
   [in]
   (let [{:keys [family/id] :as in}  (taxa/thing in)]
@@ -88,7 +82,7 @@
       (taxa/taxon children))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Example, from m
+;;; Example
 ;;;
 
 (defn api
