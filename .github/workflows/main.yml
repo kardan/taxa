@@ -24,3 +24,7 @@ jobs:
       - name: Clojure test suit
         run: ./bin/kaocha clj
         shell: bash
+
+      - name: ClojureScript test suit
+        run: ./bin/kaocha clj
+        shell: bash
