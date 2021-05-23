@@ -1,7 +1,8 @@
-(ns com.kardansa.taxa.rationale
-  (:require [com.kardans.taxa :as taxa]
-            #?(:clj [com.kardans.taxa.flow.clj :refer [taxed-let while->]]
-               :cljs [com.kardans.taxa.flow.cljs :refer-macros [taxed-let while->]])))
+(ns com.kardans.taxa.rationale
+  (:require
+   [com.kardans.taxa :as taxa]
+   #?(:clj [com.kardans.taxa.flow.clj :refer [while->]]
+      :cljs [com.kardans.taxa.flow.cljs :refer-macros [while->]])))
 
 
 (def db (atom {:person/id {1 {:person/id 1

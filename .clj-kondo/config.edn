@@ -1,2 +1,4 @@
 {:lint-as {com.kardans.taxa.flow.clj/taxed-let clojure.core/let
-           com.kardans.taxa.flow.cljs/taxed-let clojure.core/let}}
+           com.kardans.taxa.flow.cljs/taxed-let clojure.core/let}
+ :output {:exclude-files ["src/dev/com/kardans/taxa/rationale.cljc"]}}
+ }
