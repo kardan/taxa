@@ -3,5 +3,7 @@
                               org.clojure/clojurescript {:mvn/version "1.10.844"}}}
            :test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-554"}
                                com.lambdaisland/kaocha-cljs {:mvn/version "1.0.93"}}
-                  :extra-paths ["src/test"]}}
+                  :extra-paths ["src/test"]}
+           :clj-kondo {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2021.04.23"}}
+                       :main-opts ["-m" "clj-kondo.main"]}}
  :paths ["src/main"]}

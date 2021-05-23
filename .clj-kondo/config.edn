@@ -1,1 +1,2 @@
-{:lint-as {com.kardans.taxa.alfa.util/taxed-let clojure.core/let}}
+{:lint-as {com.kardans.taxa.flow.clj/taxed-let clojure.core/let
+           com.kardans.taxa.flow.cljs/taxed-let clojure.core/let}}

@@ -21,6 +21,10 @@ jobs:
         with:
           cli: 1.10.1.693 # Clojure CLI based on tools.deps
 
+      - name: Clj-Kondo lint
+        run: clj -M:clj-kondo --lint src
+        shell: bash
+
       - name: Clojure test suit
         run: ./bin/kaocha clj
         shell: bash

@@ -139,8 +139,7 @@
         (is (empty? ancestors))))
 
     (testing "Hierarchy alteration"
-      (let [{:keys [parents descendants ancestors] :as updated-hierarchy}
-            (taxa/in-taxa derive test-hierarchy ::car ::vehicle)]
+      (let [updated-hierarchy (taxa/in-taxa derive test-hierarchy ::car ::vehicle)]
         (is (contains? (-> updated-hierarchy :parents ::car)
                        ::vehicle))
         (is (contains? (-> updated-hierarchy :ancestors ::car)

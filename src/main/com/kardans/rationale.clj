@@ -1,5 +1,10 @@
 (ns com.kardans.rationale
-  (:require [com.kardans.taxa :as taxa]))
+  (:require [com.kardans.taxa :as taxa]
+            [com.kardans.taxa.flow.clj :refer [while->]]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Data
+;;;
 
 (def db (atom {:person/id {1 {:person/id 1
                               :person/name "Daniel"
@@ -35,33 +40,46 @@
                                                [:person/id 2]
                                                [:person/id 3]
                                                [:person/id 5]
-                                               [:person/id 7]]}}}))
+                                               [:person/id 7]]}
+                           7 {:family/id 7
+                              :family/name "Bond"
+                              :family/members []}}}))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Fans
+;;;
 
-(defn validate-input [{:keys [family/id] :as in}]
+(defn validate-input
+  [in]
+  (let [{:keys [family/id] :as in}  (taxa/thing in)]
+       (if (and (contains? in :family/id)
+                (number? id))
+         (taxa/taxon in)
+         (taxa/taxon {:reason "family/id not a number"
+                      :input in} ::taxa/err))))
 
-  (if (and (contains? in :family/id)
-           (number? id))
-    (taxa/taxon id)
-    (taxa/taxon {:reason "family/id not a number"
-                 :input in} ::taxa/err)))
+(defn get-family
+  [in]
+  (let [{:keys [family/id]} (taxa/thing in)]
+    (if-some [family (get-in @db [:family/id id])]
+      (taxa/taxon family)
+      (taxa/taxon {:reason (str "Could not find family with id " id)}
+                  ::taxa/err))))
 
-(defn get-family [{:keys [family/id]}]
-  (if-some [family (get-in @db [:family/id id])]
-    (taxa/taxon family)
-    (taxa/taxon {:reason (str "Could not find family with id " id)}
-                ::taxa/err)))
-
-(defn get-members [family]
-  (let [members (map #(get-in @db %)
+(defn get-members
+  [in]
+  (let [family (taxa/thing in)
+        members (map #(get-in @db %)
                      (-> family :family/members))]
     (if (empty? members)
       (taxa/taxon {::reason "No family members"} :taxa/err)
       (taxa/taxon members))))
 
-(defn filter-kids [members]
-  (let [current-year (.getValue (java.time.Year/now))
+(defn filter-kids
+  [in]
+  (let [members (taxa/thing in)
+        current-year (.getValue (java.time.Year/now))
         children (filter #(< (- current-year (:person/birth %))
                              18)
                          members)]
@@ -69,48 +87,33 @@
       (taxa/taxon {:reason "No children"} :taxa/err)
       (taxa/taxon children))))
 
-(defn api [in]
-  (taxa/rel-> in
-              validate-input
-              get-family
-              get-members
-              filter-kids
-              ))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Example, from m
+;;;
+
+(defn api
+  [in]
+  (while-> in
+    validate-input
+    get-family
+    get-members
+    filter-kids))
+
+(api {:family/id ""})
+;; #:com.kardans.taxa{:tag :com.kardans.taxa/err,
+;;                    :thing {:reason "family/id not a number",
+;;                            :input #:family{:id ""}}}
+
+(api {:family/id 0})
+;; #:com.kardans.taxa{:tag :com.kardans.taxa/err,
+;;                    :thing {:reason "Could not find family with id 0"}}
+
+(api {:family/id 7})
+;; #:com.kardans.taxa{:tag :taxa/err,
+;;                    :thing #:com.kardans.rationale{:reason "No family members"}}
 
 (api {:family/id 1})
-
-
-(let [plan [{:fn validate-input
-             :ret x}
-            {:fn get-family
-             :args [db x]
-             :ret y}
-            {:fn get-members
-             :ret z}]]
-  (taxa/exec plan
-
-
-             ))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;;
-
-(defn f [plan & {:keys [executor tag] :or {executor :default}}]
-  {:plan plan
-   :executor executor})
-
-(f [{:fn :f}] :executor :async)
-
-(comment
-
-  (let [plan [{:fn f
-               :ret x}
-              {:fn g
-               :args [db x]
-               :ret y}
-              {:fn h
-               :args [y]
-               :ret z}]]
-    (taxa/exec plan ))
-  )
+;; #:com.kardans.taxa{:tag :com.kardans.taxa/ok,
+;;                    :thing (#:person{:id 3, :name "Vera", :birth 2012, :sex "F"}
+;;                            #:person{:id 5, :name "Stina", :birth 2014, :sex "F"}
+;;                            #:person{:id 7, :name "Karl", :birth 2019, :sex "M"})}
