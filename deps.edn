@@ -5,5 +5,14 @@
                                com.lambdaisland/kaocha-cljs {:mvn/version "1.0.93"}}
                   :extra-paths ["src/test"]}
            :clj-kondo {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2021.04.23"}}
-                       :main-opts ["-m" "clj-kondo.main"]}}
+                       :main-opts ["-m" "clj-kondo.main"]}
+           :jar {:replace-deps {com.github.seancorfield/depstar {:mvn/version "2.0.216"}}
+                 :exec-fn hf.depstar/jar
+                 :exec-args {}}
+           :deploy {:extra-deps {slipset/deps-deploy {:mvn/version "RELEASE"}}
+                    :exec-fn deps-deploy.deps-deploy/deploy
+                    :exec-args {:installer :remote
+                                :sign-releases? true
+                                :artifact "deps-deploy.jar"}}
+           }
  :paths ["src/main"]}
