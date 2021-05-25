@@ -1,18 +1,18 @@
-{:aliases {:dev {:extra-paths ["src/dev"]
-                 :extra-deps {org.clojure/clojure {:mvn/version "1.10.3"}
-                              org.clojure/clojurescript {:mvn/version "1.10.844"}}}
-           :test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-554"}
-                               com.lambdaisland/kaocha-cljs {:mvn/version "1.0.93"}}
-                  :extra-paths ["src/test"]}
-           :clj-kondo {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2021.04.23"}}
-                       :main-opts ["-m" "clj-kondo.main"]}
-           :jar {:replace-deps {com.github.seancorfield/depstar {:mvn/version "2.0.216"}}
-                 :exec-fn hf.depstar/jar
-                 :exec-args {}}
-           :deploy {:extra-deps {slipset/deps-deploy {:mvn/version "RELEASE"}}
-                    :exec-fn deps-deploy.deps-deploy/deploy
-                    :exec-args {:installer :remote
-                                :sign-releases? false
-                                :artifact "com.kardans.taxa.0.3.jar"}}
-           }
+{:aliases
+ {:dev {:extra-paths ["src/dev"]
+        :extra-deps {org.clojure/clojure {:mvn/version "1.10.3"}
+                     org.clojure/clojurescript {:mvn/version "1.10.844"}}}
+  :test {:extra-deps {lambdaisland/kaocha {:mvn/version "0.0-554"}
+                      com.lambdaisland/kaocha-cljs {:mvn/version "1.0.93"}}
+         :extra-paths ["src/test"]}
+  :clj-kondo {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2021.04.23"}}
+              :main-opts ["-m" "clj-kondo.main"]}
+  :jar {:replace-deps {com.github.seancorfield/depstar {:mvn/version "2.0.216"}}
+        :exec-fn hf.depstar/jar
+        :exec-args {}}
+  :deploy {:extra-deps {slipset/deps-deploy {:mvn/version "RELEASE"}}
+           :exec-fn deps-deploy.deps-deploy/deploy
+           :exec-args {:installer :remote
+                       :sign-releases? false
+                       :artifact "com.kardans.taxa.jar"}}}
  :paths ["src/main"]}

@@ -1,12 +1,12 @@
-# Taxa [![CI](https://github.com/kardan/taxa/workflows/CI/badge.svg)](https://github.com/kardan/taxa/actions) [![cljdoc badge](https://cljdoc.org/badge/com.kardans/taxa)](https://cljdoc.org/d/com.kardans/taxa/0.1.0) [![Clojars Project](https://img.shields.io/clojars/v/com.kardans/taxa.svg)](https://clojars.org/com.kardans/taxa)
+# Taxa [![CI](https://github.com/kardan/taxa/workflows/CI/badge.svg)](https://github.com/kardan/taxa/actions) [![cljdoc badge](https://cljdoc.org/badge/com.kardan/taxa)](https://cljdoc.org/d/com.kardans/taxa/0.1.0) [![Clojars Project](https://img.shields.io/clojars/v/com.kardans/taxa.svg)](https://clojars.org/com.kardans/taxa)
 
 
 A thought experiment in hierarchical domain logic for Clojure & ClojureScript.
 
-## Rationale
+## Example
 
 ```clojure
-(ns com.kardans.taxa.rationale
+(ns com.kardans.taxa.example
   (:require
    [com.kardans.taxa :as taxa]
    #?(:clj [com.kardans.taxa.flow.clj :refer [while->]]
@@ -114,7 +114,7 @@ A thought experiment in hierarchical domain logic for Clojure & ClojureScript.
 
 (api {:family/id 7})
 ;; #:com.kardans.taxa{:tag :taxa/err,
-;;                    :thing #:com.kardans.rationale{:reason "No family members"}}
+;;                    :thing #:com.kardans.example{:reason "No family members"}}
 
 (api {:family/id 1})
 ;; #:com.kardans.taxa{:tag :com.kardans.taxa/ok,

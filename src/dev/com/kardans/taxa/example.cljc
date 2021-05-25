@@ -1,4 +1,4 @@
-(ns com.kardans.taxa.rationale
+(ns com.kardans.taxa.example
   (:require
    [com.kardans.taxa :as taxa]
    #?(:clj [com.kardans.taxa.flow.clj :refer [while->]]
@@ -105,7 +105,7 @@
 
 (api {:family/id 7})
 ;; #:com.kardans.taxa{:tag :taxa/err,
-;;                    :thing #:com.kardans.rationale{:reason "No family members"}}
+;;                    :thing #:com.kardans.example{:reason "No family members"}}
 
 (api {:family/id 1})
 ;; #:com.kardans.taxa{:tag :com.kardans.taxa/ok,
