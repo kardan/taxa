@@ -1,4 +1,4 @@
-# Taxa [![CI](https://github.com/kardan/taxa/workflows/CI/badge.svg)](https://github.com/kardan/taxa/actions) [![cljdoc badge](https://cljdoc.org/badge/com.kardan/taxa)](https://cljdoc.org/d/com.kardans/taxa/0.1.0) [![Clojars Project](https://img.shields.io/clojars/v/com.kardans/taxa.svg)](https://clojars.org/com.kardans/taxa)
+# Taxa [![CI](https://github.com/kardan/taxa/workflows/CI/badge.svg)](https://github.com/kardan/taxa/actions) [![cljdoc badge](https://cljdoc.org/badge/com.kardans/taxa)](https://cljdoc.org/d/com.kardans/taxa/0.1.0) [![Clojars Project](https://img.shields.io/clojars/v/com.kardans/taxa.svg)](https://clojars.org/com.kardans/taxa)
 
 
 A thought experiment in hierarchical domain logic for Clojure & ClojureScript.
